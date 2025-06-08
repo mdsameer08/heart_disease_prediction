@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multimodal Heart Disease Prediction using ECGs EHRs and wearable sensor data</title>
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://kit.fontawesome.com/5f3f547070.js" crossorigin="anonymous"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Pacificodisplay=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700display=swap" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+    
+    .container {
+      text-align: center;
+      padding: 30px 20px;
+      background: linear-gradient(to right, #667eea, #764ba2);
+      color: white;
+      border-radius: 0 0 20px 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    
+    .container-heading {
+      margin-bottom: 15px;
+      font-size: 2.5rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .description {
+      max-width: 800px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    
+    .description p {
+      margin: 10px 0;
+    }
+    
+    .tab-container {
+      max-width: 1000px;
+      margin: 0 auto 30px;
+      padding: 0 20px;
+    }
+    
+    .tab {
+      overflow: hidden;
+      border: none;
+      background-color: transparent;
+      border-radius: 10px 10px 0 0;
+      display: flex;
+    }
+    
+    .tab button {
+      background-color: #f1f1f1;
+      float: left;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      padding: 15px 25px;
+      transition: 0.3s;
+      font-size: 16px;
+      font-weight: 500;
+      border-radius: 10px 10px 0 0;
+      margin-right: 5px;
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+    }
+    
+    .tab button:hover {
+      background-color: #ddd;
+    }
+    
+    .tab button.active {
+      background: linear-gradient(to right, #4facfe, #00f2fe);
+      color: white;
+    }
+    
+    .tabcontent {
+      display: none;
+      padding: 30px;
+      border: none;
+      border-top: none;
+      border-radius: 0 10px 10px 10px;
+      animation: fadeEffect 0.5s;
+      background-color: white;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    @keyframes fadeEffect {
+      from {opacity: 0;}
+      to {opacity: 1;}
+    }
+    
+    .form-section {
+      background-color: #f9f9f9;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 25px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+    }
+    
+    .form-section:hover {
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+    
+    .form-section h3 {
+      color: #4a4a4a;
+      border-bottom: 2px solid #4facfe;
+      padding-bottom: 10px;
+      margin-top: 0;
+      font-weight: 600;
+    }
+    
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      margin: 0 -10px;
+    }
+    
+    .form-group {
+      flex: 1 0 calc(50% - 20px);
+      margin: 0 10px 15px;
+      min-width: 250px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #555;
+    }
+    
+    input[type="number"], select {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: border-color 0.3s;
+      background-color: #fff;
+    }
+    
+    input[type="number"]:focus, select:focus {
+      border-color: #4facfe;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.2);
+    }
+    
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 30px;
+    }
+    
+    .my-cta-button {
+      background: linear-gradient(to right, #4facfe, #00f2fe);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+    }
+    
+    .my-cta-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 7px 20px rgba(79, 172, 254, 0.5);
+    }
+    
+    .my-cta-button:active {
+      transform: translateY(1px);
+    }
+    
+    .secondary-button {
+      background: linear-gradient(to right, #ff9a9e, #fad0c4);
+    }
+    
+    .feature-card {
+      background-color: white;
+      border-radius: 10px;
+      padding: 25px;
+      margin-top: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      display: none;
+    }
+    
+    .feature-title {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 15px;
+      font-size: 18px;
+      border-bottom: 2px solid #4facfe;
+      padding-bottom: 10px;
+    }
+    
+    .feature-item {
+      margin: 12px 0;
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .feature-label {
+      font-weight: 500;
+      color: #555;
+    }
+    
+    .feature-value {
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 20px;
+      background-color: #f5f5f5;
+    }
+    
+    .normal {
+      color: #2ecc71;
+    }
+    
+    .warning {
+      color: #f39c12;
+    }
+    
+    .danger {
+      color: #e74c3c;
+    }
+    
+    .info-icon {
+      cursor: pointer;
+      color: #3498db;
+      margin-left: 5px;
+      transition: color 0.3s;
+    }
+    
+    .info-icon:hover {
+      color: #2980b9;
+    }
+    
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 220px;
+      background-color: #34495e;
+      color: #fff;
+      text-align: center;
+      border-radius: 8px;
+      padding: 10px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -110px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 14px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .tooltip .tooltiptext::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #34495e transparent transparent transparent;
+    }
+    
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+    
+    .info-section {
+      line-height: 1.6;
+    }
+    
+    .info-section h3 {
+      color: #4a4a4a;
+      border-bottom: 2px solid #4facfe;
+      padding-bottom: 10px;
+    }
+    
+    .info-section h4 {
+      color: #5a5a5a;
+      margin-top: 20px;
+    }
+    
+    .info-section ul {
+      padding-left: 20px;
+    }
+    
+    .info-section li {
+      margin-bottom: 8px;
+    }
+    
+    .footer {
+      text-align: center;
+      padding: 20px;
+      margin-top: 30px;
+      background-color: #34495e;
+      color: white;
+      border-radius: 20px 20px 0 0;
+    }
+    
+    .contact {
+      margin-bottom: 10px;
+    }
+    
+    .contact-icon {
+      color: white;
+      margin: 0 10px;
+      font-size: 24px;
+      transition: transform 0.3s;
+    }
+    
+    .contact-icon:hover {
+      transform: scale(1.2);
+    }
+    
+    .footer-description {
+      margin: 0;
+      font-size: 14px;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .form-group {
+        flex: 1 0 100%;
+      }
+      
+      .button-group {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .my-cta-button {
+        width: 100%;
+      }
+      
+      .container-heading {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Website Title -->
+  <div class="container">
+    <h2 class='container-heading'><span class="heading_font">Multimodal Heart Disease Prediction using ECGs EHRs and wearable sensor data</span></h2>
+    <div class='description'>
+      <p>A Machine Learning Web Application that predicts chances of having heart disease with high accuracy, built with multimodal analysis.</p>
+    </div>
+  </div>
+
+  <div class="tab-container">
+    <!-- Tab Navigation -->
+    <div class="tab">
+      <button class="tablinks active" onclick="openTab(event, 'InputTab')">Input Data</button>
+      <button class="tablinks" onclick="openTab(event, 'FeaturesTab')">Derived Features</button>
+      <button class="tablinks" onclick="openTab(event, 'InfoTab')">About the Model</button>
+    </div>
+    
+    <!-- Low Risk Test Button -->
+    <div style="text-align: center; margin-top: 10px;">
+      <a href="{{ url_for('low_risk_test') }}" class="my-cta-button" style="text-decoration: none; display: inline-block;">
+        <i class="fas fa-heart"></i> Test Low Risk Profile
+      </a>
+    </div>
+
+    <!-- Input Tab -->
+    <div id="InputTab" class="tabcontent" style="display: block;">
+      <!-- Text Area -->
+      <form id="prediction-form" action="{{ url_for('predict')}}" method="POST">
+        <div class="form-section">
+          <h3>Basic Information</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="age">Age <i class="fas fa-info-circle info-icon tooltip"><span class="tooltiptext">Your age in years</span></i></label>
+              <input type="number" id="age" name="age" placeholder="Your age in years" min="20" max="100" required>
+            </div>
+
+            <div class="form-group">
+              <label for="sex">Sex <i class="fas fa-info-circle info-icon tooltip"><span class="tooltiptext">Biological sex</span></i></label>
+              <select id="sex" name="sex" required>
+                <option value="" disabled selected>Select option</option>
+                <option value="1">Male</option>
+                <option value="0">Female</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Heart Condition</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cp">Chest Pain Type <i class="fas fa-info-circle info-icon tooltip"><span class="tooltiptext">Type of chest pain experienced</span></i></label>
+              <select id="cp" name="cp" required>
+                <option value="" disabled selected>Select option</option>
+                <option value="0">Typical Angina</option>
+                <option value="1">Atypical Angina</option>
+                <option value="2">Non-anginal Pain</option>
+                <option value="3">Asymptomatic</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="trestbps">Resting Blood Pressure <i class="fas fa-info-circle info-icon tooltip"><span class="tooltiptext">Resting blood pressure in mm Hg</span></i></label>
+              <input type="number" id="trestbps" name="trestbps" placeholder="Range [94-200] mmHg" min="90" max="220" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="chol">Serum Cholesterol <i class="fas fa-info-circle info-icon tooltip"><span class="tooltiptext">Serum cholesterol in mg/dl</span></i></label>
+              <input type="number" id="chol" name="chol" placeholder="Range [126-564] mg/dl" min="120" max="600" required>
+            </div>
+
+            <div class="form-group">
+              <label for="fbs">Fasting Blood Sugar <i class="fas fa-info-circle info-icon tooltip"><span class="tooltiptext">Fasting blood sugar > 120 mg/dl</span></i></label>
+              <select id="fbs" name="fbs" required>
+                <option value="" disabled selected>Select option</option>
+                <option value="1">Greater than 120 mg/dl</option>
+                <option value="0">Less than 120 mg/dl</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>ECG and Exercise Tests</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="restecg">Resting ECG Results <i class="fas fa-info-circle info-icon tooltip"><span class="tooltiptext">Resting electrocardiographic results</span></i></label>
+              <select id="restecg" name="restecg" required>
+                <option value="" disabled selected>Select option</option>
+                <option value="0">Normal</option>
+                <option value="1">Having ST-T wave abnormality</option>
+                <option value="2">Probable or definite left ventricular hypertrophy</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="thalach">Max Heart Rate <i class="fas fa-info-circle info-icon tooltip"><span class="tooltiptext">Maximum heart rate achieved during exercise</span></i></label>
+              <input type="number" id="thalach" name="thalach" placeholder="Range [71-202] bpm" min="60" max="220" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="exang">Exercise-induced Angina <i class="fas fa-info-circle info-icon tooltip"><span class="tooltiptext">Angina induced by exercise</span></i></label>
+              <select id="exang" name="exang" required>
+                <option value="" disabled selected>Select option</option>
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="oldpeak">ST Depression <i class="fas fa-info-circle info-icon tooltip"><span class="tooltiptext">ST depression induced by exercise relative to rest</span></i></label>
+              <input type="number" id="oldpeak" name="oldpeak" placeholder="Range [0-6.2]" min="0" max="10" step="0.1" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="slope">Slope of Peak Exercise ST Segment <i class="fas fa-info-circle info-icon tooltip"><span class="tooltiptext">The slope of the peak exercise ST segment</span></i></label>
+              <select id="slope" name="slope" required>
+                <option value="" disabled selected>Select option</option>
+                <option value="0">Upsloping</option>
+                <option value="1">Flat</option>
+                <option value="2">Downsloping</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Additional Tests</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ca">Number of Major Vessels <i class="fas fa-info-circle info-icon tooltip"><span class="tooltiptext">Number of major vessels colored by fluoroscopy</span></i></label>
+              <input type="number" id="ca" name="ca" placeholder="Range [0-4]" min="0" max="4" required>
+            </div>
+
+            <div class="form-group">
+              <label for="thal">Thalassemia <i class="fas fa-info-circle info-icon tooltip"><span class="tooltiptext">A blood disorder that affects hemoglobin production</span></i></label>
+              <select id="thal" name="thal" required>
+                <option value="" disabled selected>Select option</option>
+                <option value="0">Normal</option>
+                <option value="1">Fixed Defect</option>
+                <option value="2">Reversible Defect</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button type="button" id="calculate-features" class="my-cta-button"><i class="fas fa-calculator"></i> Calculate Derived Features</button>
+          <button type="submit" class="my-cta-button"><i class="fas fa-heartbeat"></i> Predict Heart Disease</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Features Tab -->
+    <div id="FeaturesTab" class="tabcontent">
+      <div class="feature-card" id="derived-features-card">
+        <div class="feature-title"><i class="fas fa-chart-line"></i> Derived Health Features</div>
+        <div class="feature-item">
+          <span class="feature-label">Age Group:</span>
+          <span class="feature-value" id="age-group">-</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-label">Blood Pressure Status:</span>
+          <span class="feature-value" id="bp-status">-</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-label">Cholesterol Status:</span>
+          <span class="feature-value" id="chol-status">-</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-label">Heart Rate Status:</span>
+          <span class="feature-value" id="hr-status">-</span>
+        </div>
+        <div class="feature-title"><i class="fas fa-cogs"></i> Advanced Ratio Features</div>
+        <div class="feature-item">
+          <span class="feature-label">BP/Cholesterol Ratio:</span>
+          <span class="feature-value" id="bp-chol-ratio">-</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-label">Heart Rate/Age Ratio:</span>
+          <span class="feature-value" id="hr-age-ratio">-</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-label">ST Depression/Heart Rate Ratio:</span>
+          <span class="feature-value" id="oldpeak-hr-ratio">-</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-label">BP/Heart Rate Ratio:</span>
+          <span class="feature-value" id="bp-hr-ratio">-</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Tab -->
+    <div id="InfoTab" class="tabcontent">
+      <div class="info-section">
+        <h3><i class="fas fa-brain"></i> About the Neural Network Model</h3>
+        
+        
+        <h4><i class="fas fa-network-wired"></i> Model Architecture</h4>
+      
+        
+        <h4><i class="fas fa-tools"></i> Feature Engineering</h4>
+        <p>The model uses several derived features to improve prediction accuracy:</p>
+        <ul>
+          <li>Age grouping based on cardiovascular risk factors</li>
+          <li>Blood pressure and cholesterol categorization</li>
+          <li>Interaction features between categorical variables</li>
+          <li>Ratio features that capture relationships between numerical variables</li>
+          <li>Polynomial features to capture non-linear relationships</li>
+        </ul>
+        
+        
+  
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class='footer'>
+    <div class="contact">
+      <a target="_blank" href=""><i
+          class="fab fa-github fa-lg contact-icon"></i></a>
+      <a target="_blank" href=""><i
+          class="fab fa-linkedin fa-lg contact-icon"></i></a>
+    </div>
+  
+  </div>
+
+  <script>
+    // Tab functionality
+    function openTab(evt, tabName) {
+      var i, tabcontent, tablinks;
+      tabcontent = document.getElementsByClassName("tabcontent");
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+      }
+      tablinks = document.getElementsByClassName("tablinks");
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+      }
+      document.getElementById(tabName).style.display = "block";
+      evt.currentTarget.className += " active";
+    }
+
+    // Calculate derived features
+    $(document).ready(function() {
+      $("#calculate-features").click(function() {
+        // Validate form
+        var form = document.getElementById("prediction-form");
+        if (!form.checkValidity()) {
+          alert("Please fill out all required fields correctly.");
+          return;
+        }
+
+        // Get form data
+        var formData = {
+          age: $("#age").val(),
+          sex: $("#sex").val(),
+          cp: $("#cp").val(),
+          trestbps: $("#trestbps").val(),
+          chol: $("#chol").val(),
+          fbs: $("#fbs").val(),
+          restecg: $("#restecg").val(),
+          thalach: $("#thalach").val(),
+          exang: $("#exang").val(),
+          oldpeak: $("#oldpeak").val(),
+          slope: $("#slope").val(),
+          ca: $("#ca").val(),
+          thal: $("#thal").val()
+        };
+
+        // Show loading indicator
+        $("#calculate-features").html('<i class="fas fa-spinner fa-spin"></i> Calculating...');
+
+        // Send AJAX request
+        $.ajax({
+          type: "POST",
+          url: "/calculate_features",
+          data: formData,
+          success: function(response) {
+            // Update feature values
+            $("#age-group").text(response.age_group);
+            
+            // Set color based on status
+            $("#bp-status").text(response.bp_status);
+            if (response.bp_status.includes("High")) {
+              $("#bp-status").addClass("danger").removeClass("warning normal");
+            } else if (response.bp_status.includes("Elevated")) {
+              $("#bp-status").addClass("warning").removeClass("danger normal");
+            } else {
+              $("#bp-status").addClass("normal").removeClass("danger warning");
+            }
+            
+            $("#chol-status").text(response.chol_status);
+            if (response.chol_status.includes("High")) {
+              $("#chol-status").addClass("danger").removeClass("warning normal");
+            } else if (response.chol_status.includes("Borderline")) {
+              $("#chol-status").addClass("warning").removeClass("danger normal");
+            } else {
+              $("#chol-status").addClass("normal").removeClass("danger warning");
+            }
+            
+            $("#hr-status").text(response.hr_status);
+            if (response.hr_status.includes("Tachycardia")) {
+              $("#hr-status").addClass("warning").removeClass("danger normal");
+            } else if (response.hr_status.includes("Bradycardia")) {
+              $("#hr-status").addClass("warning").removeClass("danger normal");
+            } else {
+              $("#hr-status").addClass("normal").removeClass("danger warning");
+            }
+            
+            $("#bp-chol-ratio").text(response.trestbps_chol_ratio);
+            $("#hr-age-ratio").text(response.thalach_age_ratio);
+            $("#oldpeak-hr-ratio").text(response.oldpeak_thalach_ratio);
+            $("#bp-hr-ratio").text(response.trestbps_thalach_ratio);
+            
+            // Show the features card
+            $("#derived-features-card").show();
+            
+            // Switch to Features tab
+            $(".tablinks")[1].click();
+            
+            // Reset button text
+            $("#calculate-features").html('<i class="fas fa-calculator"></i> Calculate Derived Features');
+          },
+          error: function(error) {
+            console.log(error);
+            alert("Error calculating features. Please check your inputs.");
+            // Reset button text
+            $("#calculate-features").html('<i class="fas fa-calculator"></i> Calculate Derived Features');
+          }
+        });
+      });
+      
+      // Add animation to form sections
+      $(".form-section").hover(function() {
+        $(this).css("background-color", "#f0f7ff");
+      }, function() {
+        $(this).css("background-color", "#f9f9f9");
+      });
+    });
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+
+<html lang="en" dir="ltr">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Heart Disease Prediction Result</title>
+		<link rel="shortcut icon" href="{{ url_for('static', filename='diabetes-favicon.ico') }}">
+		<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+		<script src="https://kit.fontawesome.com/5f3f547070.js" crossorigin="anonymous"></script>
+		<link href="https://fonts.googleapis.com/css2?family=Pacificodisplay=swap" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            .result-container {
+                background-color: #fff;
+                border-radius: 10px;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                padding: 20px;
+                margin: 20px auto;
+                max-width: 800px;
+            }
+            .prediction-header {
+                text-align: center;
+                margin-bottom: 20px;
+                padding-bottom: 15px;
+                border-bottom: 1px solid #eee;
+            }
+            .prediction-details {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+            }
+            .prediction-section {
+                flex: 1;
+                min-width: 300px;
+                margin: 10px;
+                padding: 15px;
+                background-color: #f9f9f9;
+                border-radius: 8px;
+            }
+            .feature-item {
+                margin: 10px 0;
+                padding: 8px;
+                border-bottom: 1px solid #eee;
+            }
+            .feature-label {
+                font-weight: bold;
+                color: #555;
+            }
+            .feature-value {
+                float: right;
+            }
+            .normal {
+                color: green;
+            }
+            .warning {
+                color: orange;
+            }
+            .danger {
+                color: red;
+            }
+            .chart-container {
+                width: 100%;
+                max-width: 400px;
+                margin: 20px auto;
+            }
+            .action-buttons {
+                display: flex;
+                justify-content: center;
+                margin-top: 20px;
+            }
+            .action-button {
+                margin: 0 10px;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-weight: bold;
+                transition: all 0.3s;
+            }
+            .primary-button {
+                background-color: #3498db;
+                color: white;
+            }
+            .primary-button:hover {
+                background-color: #2980b9;
+            }
+            .secondary-button {
+                background-color: #2ecc71;
+                color: white;
+            }
+            .secondary-button:hover {
+                background-color: #27ae60;
+            }
+            .probability-meter {
+                width: 100%;
+                height: 30px;
+                background-color: #f1f1f1;
+                border-radius: 15px;
+                margin: 15px 0;
+                overflow: hidden;
+                position: relative;
+            }
+            .probability-fill {
+                height: 100%;
+                border-radius: 15px;
+                text-align: center;
+                line-height: 30px;
+                color: white;
+                font-weight: bold;
+                transition: width 1s ease-in-out;
+            }
+            .risk-high {
+                background-color: #e74c3c;
+            }
+            .risk-medium {
+                background-color: #f39c12;
+            }
+            .risk-low {
+                background-color: #2ecc71;
+            }
+            .feature-explanation {
+                font-size: 0.9em;
+                color: #666;
+                margin-top: 5px;
+                font-style: italic;
+            }
+        </style>
+	</head>
+
+    <body>
+
+        <!-- Website Title -->
+		<div class="container">
+            <h2 class='container-heading'><span class="heading_font">Multimodal Heaty Disease Prediction using ECGs EHRs and wearable sensor data</span></h2>
+            
+            <div class='description'>
+    			<p>A Machine Learning Web App</p>
+    		</div>
+    	</div>
+
+		<!-- Result Container -->
+        <div class="result-container">
+            <!-- Prediction Header -->
+            <div class="prediction-header">
+                {% if prediction==1 %}
+                    <h1>Prediction: <span class='danger'>High Heart Disease Risk Detected</span></h1>
+                    <div class="probability-meter">
+                        <div class="probability-fill risk-high" style="width: {{ probability }}%;">
+                            {{ probability }}% Risk
+                        </div>
+                    </div>
+                    <p>Our advanced multi model has detected patterns in your data that suggest a risk of heart disease.</p>
+                    <p><strong>Important:</strong> This is not a diagnosis. Please consult with a healthcare professional for proper evaluation.</p>
+                {% elif prediction==0 %}
+                    <h1>Prediction: <span class='safe'>Low Heart Disease Risk</span></h1>
+                    <div class="probability-meter">
+                        <div class="probability-fill risk-low" style="width: {{ 100 - probability }}%;">
+                            {{ 100 - probability }}% Healthy
+                        </div>
+                    </div>
+                    <p>Our advanced multi model indicates that your risk factors are within normal ranges.</p>
+                    <p><strong>Remember:</strong> Always maintain a healthy lifestyle and regular check-ups.</p>
+                {% endif %}
+            </div>
+
+            <!-- Prediction Details -->
+            <div class="prediction-details">
+                <!-- Health Indicators Section -->
+                <div class="prediction-section">
+                    <h3>Health Indicators</h3>
+                    
+                    <div class="feature-item">
+                        <span class="feature-label">Age Group:</span>
+                        <span class="feature-value">{{ derived_features.age_group }}</span>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <span class="feature-label">Blood Pressure Status:</span>
+                        <span class="feature-value {% if 'High' in derived_features.bp_status %}danger{% elif 'Elevated' in derived_features.bp_status %}warning{% else %}normal{% endif %}">
+                            {{ derived_features.bp_status }}
+                        </span>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <span class="feature-label">Cholesterol Status:</span>
+                        <span class="feature-value {% if 'High' in derived_features.chol_status %}danger{% elif 'Borderline' in derived_features.chol_status %}warning{% else %}normal{% endif %}">
+                            {{ derived_features.chol_status }}
+                        </span>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <span class="feature-label">Heart Rate Status:</span>
+                        <span class="feature-value {% if 'Tachycardia' in derived_features.hr_status or 'Bradycardia' in derived_features.hr_status %}warning{% else %}normal{% endif %}">
+                            {{ derived_features.hr_status }}
+                        </span>
+                    </div>
+                    
+                    {% if input_data is defined %}
+                    <h3 style="margin-top: 20px;">Input Values</h3>
+                    <div class="feature-item">
+                        <span class="feature-label">Age:</span>
+                        <span class="feature-value">{{ input_data.age }}</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-label">Sex:</span>
+                        <span class="feature-value">{{ "Female" if input_data.sex == 0 else "Male" }}</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-label">Chest Pain Type:</span>
+                        <span class="feature-value">
+                            {% if input_data.cp == 0 %}Typical Angina
+                            {% elif input_data.cp == 1 %}Atypical Angina
+                            {% elif input_data.cp == 2 %}Non-anginal Pain
+                            {% elif input_data.cp == 3 %}Asymptomatic
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-label">Resting BP:</span>
+                        <span class="feature-value">{{ input_data.trestbps }} mmHg</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-label">Cholesterol:</span>
+                        <span class="feature-value">{{ input_data.chol }} mg/dl</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-label">Max Heart Rate:</span>
+                        <span class="feature-value">{{ input_data.thalach }} bpm</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Advanced Features Section -->
+                <div class="prediction-section">
+                    <h3>Advanced Features Used by Model</h3>
+                    
+                    <div class="feature-item">
+                        <span class="feature-label">BP/Cholesterol Ratio:</span>
+                        <span class="feature-value">{{ derived_features.trestbps_chol_ratio }}</span>
+                        <div class="feature-explanation">Relationship between blood pressure and cholesterol</div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <span class="feature-label">Heart Rate/Age Ratio:</span>
+                        <span class="feature-value">{{ derived_features.thalach_age_ratio }}</span>
+                        <div class="feature-explanation">How heart rate compares to age (higher is better)</div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <span class="feature-label">ST Depression/Heart Rate:</span>
+                        <span class="feature-value">{{ derived_features.oldpeak_thalach_ratio }}</span>
+                        <div class="feature-explanation">Relationship between ST depression and heart rate</div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <span class="feature-label">BP/Heart Rate Ratio:</span>
+                        <span class="feature-value">{{ derived_features.trestbps_thalach_ratio }}</span>
+                        <div class="feature-explanation">Relationship between blood pressure and heart rate</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="chart-container">
+                <canvas id="featureImportanceChart"></canvas>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <a href="{{ url_for('home') }}">
+                    <button class="action-button primary-button">Try Another Prediction</button>
+                </a>
+                {% if prediction==1 %}
+                <button class="action-button secondary-button" onclick="showHealthTips()">Get Health Tips</button>
+                {% endif %}
+            </div>
+        </div>
+
+		<!-- Footer -->
+       <div class='footer'>
+           <div class="contact">
+               <a target="_blank" href=""><i class="fab fa-github fa-lg contact-icon"></i></a>
+               <a target="_blank" href=""><i class="fab "></i></a>
+           </div>
+           <p class='footer-description'></p>
+       </div>
+
+        <script>
+            // Create feature importance chart
+            document.addEventListener('DOMContentLoaded', function() {
+                var ctx = document.getElementById('featureImportanceChart').getContext('2d');
+                
+                // Top 5 features (these would ideally come from the model)
+                var features = {{ top_features|tojson }};
+                
+                // Dummy importance values - in a real app, these would come from the model
+                var importanceValues = [0.9, 0.85, 0.75, 0.65, 0.55];
+                
+                var chart = new Chart(ctx, {
+                    type: 'horizontalBar',
+                    data: {
+                        labels: features,
+                        datasets: [{
+                            label: 'Feature Importance',
+                            data: importanceValues,
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.7)',
+                                'rgba(54, 162, 235, 0.7)',
+                                'rgba(255, 206, 86, 0.7)',
+                                'rgba(75, 192, 192, 0.7)',
+                                'rgba(153, 102, 255, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 206, 86, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(153, 102, 255, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        title: {
+                            display: true,
+                            text: 'Top Features Used in Prediction'
+                        },
+                        scales: {
+                            xAxes: [{
+                                ticks: {
+                                    beginAtZero: true,
+                                    max: 1
+                                }
+                            }]
+                        }
+                    }
+                });
+            });
+            
+            // Function to show health tips
+            function showHealthTips() {
+                alert("Health Tips for Heart Disease Prevention:\n\n" +
+                      "1. Maintain a healthy diet rich in fruits, vegetables, and whole grains\n" +
+                      "2. Exercise regularly (at least 150 minutes of moderate activity per week)\n" +
+                      "3. Quit smoking and limit alcohol consumption\n" +
+                      "4. Manage stress through relaxation techniques\n" +
+                      "5. Monitor and control your blood pressure and cholesterol\n" +
+                      "6. Maintain a healthy weight\n" +
+                      "7. Get regular check-ups with your healthcare provider");
+            }
+        </script>
+	</body>
+</html>

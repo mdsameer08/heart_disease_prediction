@@ -1,0 +1,149 @@
+@startuml Heart Disease Prediction System - Sequence Diagram
+
+' Participants
+actor "User" as user
+participant "Web Application" as webapp
+participant "Prediction Service" as service
+participant "Feature Engineer" as feature_eng
+participant "Data Processor" as data_proc
+participant "Model" as model
+participant "ECG Processor" as ecg_proc
+participant "EHR Processor" as ehr_proc
+participant "Wearable Processor" as wearable_proc
+participant "Modality Fusion" as fusion
+
+' Training Flow (shown as a reference)
+note over user, fusion: Model Training Flow (Performed Offline)
+ref over data_proc, model
+  1. Load and preprocess training data
+  2. Perform feature engineering
+  3. Balance classes with SMOTEENN
+  4. Train individual models
+  5. Create voting ensemble
+  6. Create meta-ensemble
+  7. Evaluate and select best model
+  8. Serialize model for deployment
+end ref
+
+' Main Prediction Flow
+note over user, fusion: Prediction Flow
+
+' User interaction
+user -> webapp: Access web application
+webapp -> user: Display input form
+
+' Standard prediction flow
+group Standard Prediction
+  user -> webapp: Submit patient data
+  webapp -> service: Request prediction
+  
+  service -> feature_eng: Process input data
+  
+  feature_eng -> feature_eng: Create age groups
+  feature_eng -> feature_eng: Create interaction features
+  feature_eng -> feature_eng: Create polynomial features
+  feature_eng -> feature_eng: Create domain-specific features
+  
+  feature_eng --> service: Return processed features
+  
+  service -> data_proc: Scale features
+  data_proc --> service: Return scaled features
+  
+  alt Single Model
+    service -> model: Predict(scaled_features)
+    model --> service: Return prediction and probability
+  else Meta-Ensemble
+    service -> model: Get base model predictions
+    model --> service: Return base predictions
+    service -> model: Meta-classifier.predict(base_predictions)
+    model --> service: Return ensemble prediction and probability
+  end
+  
+  service --> webapp: Return prediction results
+  
+  webapp -> webapp: Format results
+  webapp -> user: Display prediction results
+end
+
+' Multimodal prediction flow
+group Multimodal Prediction
+  user -> webapp: Submit multimodal data (ECG, EHR, Wearable)
+  webapp -> service: Request multimodal prediction
+  
+  ' Process each modality in parallel
+  par ECG Processing
+    service -> ecg_proc: Process ECG signal
+    ecg_proc -> ecg_proc: Filter signal
+    ecg_proc -> ecg_proc: Extract waveform features
+    ecg_proc -> ecg_proc: Analyze intervals and morphology
+    ecg_proc --> service: Return ECG features
+  and EHR Processing
+    service -> ehr_proc: Process EHR data
+    ehr_proc -> ehr_proc: Extract clinical data
+    ehr_proc -> ehr_proc: Normalize values
+    ehr_proc -> ehr_proc: Handle missing data
+    ehr_proc --> service: Return EHR features
+  and Wearable Processing
+    service -> wearable_proc: Process wearable data
+    wearable_proc -> wearable_proc: Filter noise
+    wearable_proc -> wearable_proc: Extract activity patterns
+    wearable_proc -> wearable_proc: Calculate HRV metrics
+    wearable_proc --> service: Return wearable features
+  end
+  
+  ' Feature fusion
+  service -> fusion: Fuse modality features
+  fusion -> fusion: Perform early fusion
+  fusion -> fusion: Select top features
+  fusion -> fusion: Apply dimensionality reduction
+  fusion --> service: Return fused features
+  
+  ' Model prediction
+  service -> data_proc: Scale fused features
+  data_proc --> service: Return scaled features
+  
+  alt Modality-Specific Models
+    service -> model: Get predictions from modality-specific models
+    model --> service: Return modality predictions
+    service -> model: Meta-classifier.predict(modality_predictions)
+    model --> service: Return ensemble prediction
+  else Unified Model
+    service -> model: Predict(scaled_fused_features)
+    model --> service: Return prediction and probability
+  end
+  
+  service --> webapp: Return multimodal prediction results
+  
+  webapp -> webapp: Format results with modality contributions
+  webapp -> user: Display comprehensive prediction results
+end
+
+' Feature calculation for UI
+group Feature Calculation (AJAX)
+  user -> webapp: Input partial data
+  webapp -> service: Request derived features
+  service -> feature_eng: Calculate derived features
+  feature_eng --> service: Return derived features
+  service --> webapp: Return feature calculations
+  webapp -> user: Update UI with derived features
+end
+
+' Low risk test flow
+group Low Risk Test
+  user -> webapp: Click "Test Low Risk Profile"
+  webapp -> webapp: Load predefined low-risk data
+  webapp -> service: Request prediction with low-risk data
+  
+  ' Same processing as standard prediction
+  service -> feature_eng: Process low-risk data
+  feature_eng --> service: Return processed features
+  service -> data_proc: Scale features
+  data_proc --> service: Return scaled features
+  service -> model: Predict(scaled_features)
+  model --> service: Return prediction and probability
+  
+  service --> webapp: Return prediction results
+  webapp -> user: Display low-risk prediction results
+end
+
+@enduml

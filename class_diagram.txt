@@ -1,0 +1,180 @@
+@startuml Heart Disease Prediction System - Class Diagram
+
+' Main packages
+package "Data Processing" {
+  class DataLoader {
+    + load_data(file_path: String): DataFrame
+    + preprocess_data(data: DataFrame): DataFrame
+    - encode_categorical_features(data: DataFrame): DataFrame
+    - handle_missing_values(data: DataFrame): DataFrame
+  }
+  
+  class FeatureEngineer {
+    + create_age_groups(data: DataFrame): DataFrame
+    + create_interaction_features(data: DataFrame): DataFrame
+    + create_polynomial_features(data: DataFrame): DataFrame
+    + create_domain_features(data: DataFrame): DataFrame
+    + select_top_features(data: DataFrame, target: Series, n_features: int): List<String>
+  }
+  
+  class DataBalancer {
+    + balance_classes(X: DataFrame, y: Series): Tuple<DataFrame, Series>
+    - apply_smoteenn(X: DataFrame, y: Series): Tuple<DataFrame, Series>
+    - apply_stratified_sampling(X: DataFrame, y: Series): Tuple<DataFrame, Series>
+  }
+}
+
+package "Models" {
+  abstract class BaseModel {
+    # model: Any
+    # name: String
+    + train(X: DataFrame, y: Series): void
+    + predict(X: DataFrame): Array
+    + predict_proba(X: DataFrame): Array
+    + evaluate(X: DataFrame, y: Series): Dict
+  }
+  
+  class NeuralNetworkModel extends BaseModel {
+    - hidden_layers: List<int>
+    - activation: String
+    - solver: String
+    + configure_architecture(hidden_layers: List<int>, activation: String): void
+  }
+  
+  class SVMModel extends BaseModel {
+    - kernel: String
+    - C: float
+    - gamma: String
+    + set_kernel_parameters(kernel: String, C: float, gamma: String): void
+  }
+  
+  class XGBoostModel extends BaseModel {
+    - n_estimators: int
+    - max_depth: int
+    - learning_rate: float
+    + set_boosting_parameters(n_estimators: int, max_depth: int, learning_rate: float): void
+  }
+  
+  class RandomForestModel extends BaseModel {
+    - n_estimators: int
+    - max_depth: int
+    - min_samples_split: int
+    + set_forest_parameters(n_estimators: int, max_depth: int, min_samples_split: int): void
+  }
+  
+  class GradientBoostingModel extends BaseModel {
+    - n_estimators: int
+    - learning_rate: float
+    - max_depth: int
+    + set_boosting_parameters(n_estimators: int, learning_rate: float, max_depth: int): void
+  }
+}
+
+package "Ensemble" {
+  class VotingEnsemble {
+    - models: List<BaseModel>
+    - weights: List<float>
+    - voting_type: String
+    + add_model(model: BaseModel, weight: float): void
+    + train(X: DataFrame, y: Series): void
+    + predict(X: DataFrame): Array
+    + predict_proba(X: DataFrame): Array
+  }
+  
+  class MetaEnsemble {
+    - base_models: List<BaseModel>
+    - meta_classifier: BaseModel
+    + train(X_train: DataFrame, y_train: Series, X_val: DataFrame, y_val: Series): void
+    + predict(X: DataFrame): Array
+    + predict_proba(X: DataFrame): Array
+  }
+}
+
+package "Evaluation" {
+  class ModelEvaluator {
+    + calculate_accuracy(y_true: Array, y_pred: Array): float
+    + generate_classification_report(y_true: Array, y_pred: Array): String
+    + create_confusion_matrix(y_true: Array, y_pred: Array): Array
+    + calculate_roc_auc(y_true: Array, y_pred_proba: Array): float
+    + compare_models(models: List<BaseModel>, X: DataFrame, y: Series): Dict
+  }
+}
+
+package "Deployment" {
+  class ModelSerializer {
+    + save_model(model: Any, filename: String): void
+    + load_model(filename: String): Any
+  }
+  
+  class PredictionService {
+    - model: Any
+    - scaler: Any
+    - features: List<String>
+    + initialize(model_path: String): void
+    + preprocess_input(input_data: Dict): DataFrame
+    + predict(input_data: Dict): Dict
+    + explain_prediction(input_data: Dict): Dict
+  }
+  
+  class WebApplication {
+    - prediction_service: PredictionService
+    + home(): Template
+    + predict(form_data: Dict): Template
+    + calculate_features(form_data: Dict): JSON
+    + low_risk_test(): Template
+  }
+}
+
+' Multimodal Extensions
+package "Multimodal" {
+  class ECGProcessor {
+    + process_signal(ecg_data: Array): Array
+    + extract_features(processed_data: Array): DataFrame
+    + analyze_waveform(processed_data: Array): Dict
+  }
+  
+  class EHRProcessor {
+    + extract_data(ehr_records: Dict): DataFrame
+    + normalize_values(data: DataFrame): DataFrame
+    + impute_missing_data(data: DataFrame): DataFrame
+  }
+  
+  class WearableProcessor {
+    + filter_noise(sensor_data: Array): Array
+    + extract_activity_patterns(processed_data: Array): DataFrame
+    + calculate_hrv_metrics(heart_rate_data: Array): Dict
+  }
+  
+  class ModalityFusion {
+    + early_fusion(ecg_features: DataFrame, ehr_features: DataFrame, wearable_features: DataFrame): DataFrame
+    + late_fusion(ecg_predictions: Array, ehr_predictions: Array, wearable_predictions: Array): Array
+    + feature_selection(combined_features: DataFrame, target: Series): DataFrame
+  }
+}
+
+' Relationships
+DataLoader --> FeatureEngineer
+FeatureEngineer --> DataBalancer
+DataBalancer --> BaseModel
+
+BaseModel <|-- NeuralNetworkModel
+BaseModel <|-- SVMModel
+BaseModel <|-- XGBoostModel
+BaseModel <|-- RandomForestModel
+BaseModel <|-- GradientBoostingModel
+
+BaseModel --> VotingEnsemble
+VotingEnsemble --> MetaEnsemble
+BaseModel --> ModelEvaluator
+MetaEnsemble --> ModelEvaluator
+
+ModelEvaluator --> ModelSerializer
+ModelSerializer --> PredictionService
+PredictionService --> WebApplication
+
+ECGProcessor --> ModalityFusion
+EHRProcessor --> ModalityFusion
+WearableProcessor --> ModalityFusion
+ModalityFusion --> FeatureEngineer
+
+@enduml
